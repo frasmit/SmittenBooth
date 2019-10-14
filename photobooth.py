@@ -24,8 +24,9 @@ waiting = True
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 
-GPIO.setup(14, GPIO.OUT, initial=0)
-GPIO.setup(15, GPIO.OUT, initial=0)
+# GPIO output is inverted. Using relay in normally closed circuit mode and applying voltage breaks the circuit
+GPIO.setup(14, GPIO.OUT, initial=1)
+GPIO.setup(15, GPIO.OUT, initial=1)
 
 localFileDir = os.path.dirname(os.path.abspath(__file__))
 image_path = localFileDir + '/includes/images/'  # Location of ready and countdown images
@@ -59,7 +60,7 @@ camera.ISO = 800
 
 # Turns on Camera Preview as well as button light.
 def previewStart():
-    GPIO.output(15, 1)
+    GPIO.output(15, 0)
     camera.resolution = (1360, 768) 
     camera.framerate = 30
     camera.hflip = True
@@ -75,16 +76,16 @@ def previewStop():
     camera.stop_preview()
 
 
-# btnSate should be True before Countdown is called
-# and should end up True after Countdown complete:
+# btnSate should be False before Countdown is called
+# and should end up False after Countdown complete:
 def doCountdown():
     i = 6
-    btnState = True
+    btnState = False
     while i > 0:
         l = 'img{}'.format(i)
         btnState = not btnState
         GPIO.output(15, btnState)
-        o = camera.add_overlay(l.tobytes(), size=l.size)
+        o = camera.add_overlay(eval(l).tobytes(), size=eval(l).size)
         o.alpha = 128
         o.layer = 3
         i -= 1
@@ -93,16 +94,16 @@ def doCountdown():
 
 
 def lightOn():
-    GPIO.output(14, 1)
+    GPIO.output(14, 0)
 
 
 def lightOff():
-    GPIO.output(14, 0)
+    GPIO.output(14, 1)
 
 
 def takePhoto():
     # Manually setting button light to off
-    GPIO.output(15, 0)
+    GPIO.output(15, 1)
 
     # Grab the capture time
     time_stamp = time.strftime('%Y_%m_%dT%H_%M_%S', time.gmtime())
