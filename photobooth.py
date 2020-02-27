@@ -3,20 +3,9 @@
 import os
 import sys
 import time
-import serial
 from picamera import PiCamera
 import RPi.GPIO as GPIO
 from PIL import Image
-
-##### Setup #####
-ser = serial.Serial(
-    port='/dev/ttyACM0',
-    baudrate = 9600,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS,
-    timeout=0.1
-)
 
 camera = PiCamera()
 waiting = True
@@ -27,6 +16,7 @@ GPIO.setmode(GPIO.BCM)
 # GPIO output is inverted. Using relay in normally closed circuit mode and applying voltage breaks the circuit
 GPIO.setup(14, GPIO.OUT, initial=1)
 GPIO.setup(15, GPIO.OUT, initial=1)
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 localFileDir = os.path.dirname(os.path.abspath(__file__))
 image_path = localFileDir + '/includes/images/'  # Location of ready and countdown images
@@ -133,9 +123,9 @@ previewStart()
 
 ##### Main Loop #####
 while True:
-    checkButton=ser.readline().rstrip()
+    checkButton= GPIO.input(23)
     if waiting == True:
-        if checkButton == "ButtonPressed":
+        if checkButton == GPIO.HIGH:
             waiting = False
             doCountdown()
             lightOn()
@@ -143,6 +133,6 @@ while True:
             lightOff()
             previewStart()
     if waiting == False:
-        if checkButton != "ButtonPressed":
+        if checkButton == GPIO.LOW:
             waiting = True
     time.sleep(0.1)
